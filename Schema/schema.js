@@ -1,6 +1,12 @@
 const graphql = require('graphql')
 const Author = require('../Models/author')
-const { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLSchema, GraphQLList } = graphql
+const {
+  GraphQLObjectType,
+  GraphQLID,
+  GraphQLString,
+  GraphQLSchema,
+  GraphQLList,
+  GraphQLNonNull } = graphql
 
 const AuthorType = new GraphQLObjectType({
   name: 'Author',
@@ -46,6 +52,17 @@ const Mutation = new GraphQLObjectType({
         })
         console.log(author)
         return author.save()
+      }
+    },
+    updateAuthor: {
+      type: AuthorType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+        name: { type: GraphQLString },
+        country: { type: GraphQLString },
+      },
+      resolve(parent, args) {
+        return Author.findByIdAndUpdate(args.id, Object.assign({}, args), { new: true })
       }
     }
   }
