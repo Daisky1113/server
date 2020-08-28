@@ -2,6 +2,9 @@ const graphql = require('graphql')
 const Author = require('../Models/author')
 const Book = require('../Models/book')
 const User = require('../Models/user')
+const Comment = require('../Models/comment')
+
+
 const {
   GraphQLObjectType,
   GraphQLID,
@@ -47,6 +50,27 @@ const UserType = new GraphQLObjectType({
   })
 })
 
+const CommentType = new GraphQLObjectType({
+  name: "Comment",
+  fields: () => ({
+    id: { type: GraphQLID },
+    head: { type: GraphQLString },
+    body: { type: GraphQLString },
+    book: {
+      type: BookType,
+      resolve(parent, args) {
+        return Book.findById(parent.bookId)
+      }
+    },
+    user: {
+      type: UserType,
+      resolve(parent, args) {
+        return User.findById(parent.userId)
+      }
+    }
+  })
+})
+
 const RootQuery = new GraphQLObjectType({
   name: 'RootQuery',
   fields: {
@@ -67,7 +91,7 @@ const RootQuery = new GraphQLObjectType({
       type: BookType,
       args: { id: { type: GraphQLID } },
       resolve(parent, args) {
-        return BookType.findById(args.id)
+        return Book.findById(args.id)
       }
     },
     books: {
@@ -88,6 +112,19 @@ const RootQuery = new GraphQLObjectType({
       resolve(parent, args) {
         return User.find({})
       }
+    },
+    comment: {
+      type: CommentType,
+      args: { id: { type: GraphQLID } },
+      resolve(parent, args) {
+        return Comment.findById(args.id)
+      }
+    },
+    comments: {
+      type: new GraphQLList(CommentType),
+      resolve(parent, args) {
+        return Comment.find({})
+      }
     }
   }
 })
@@ -106,7 +143,6 @@ const Mutation = new GraphQLObjectType({
           name: args.name,
           country: args.country
         })
-        console.log(author)
         return author.save()
       }
     },
@@ -193,6 +229,45 @@ const Mutation = new GraphQLObjectType({
       },
       resolve(parent, args) {
         return user.findByIdAndDelete(args.id)
+      }
+    },
+
+    addComment: {
+      type: CommentType,
+      args: {
+        head: { type: GraphQLString },
+        body: { type: GraphQLString },
+        userId: { type: GraphQLNonNull(GraphQLID) },
+        bookId: { type: GraphQLNonNull(GraphQLID) }
+      },
+      resolve(parent, args) {
+        const comment = new Comment({
+          head: args.head,
+          body: args.body,
+          userId: args.userId,
+          bookId: args.bookId
+        })
+        return comment.save()
+      }
+    },
+    updateComment: {
+      type: CommentType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+        head: { type: GraphQLString },
+        body: { type: GraphQLString },
+      },
+      resolve(parent, args) {
+        return Comment.findByIdAndUpdate(args.id, Object.assign({}, args), { new: true })
+      }
+    },
+    deleteComment: {
+      type: CommentType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+      },
+      resolve(parent, args) {
+        return Comment.findByIdAndDelete(args.id)
       }
     }
   }
