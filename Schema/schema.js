@@ -1,6 +1,7 @@
 const graphql = require('graphql')
 const Author = require('../Models/author')
 const Book = require('../Models/book')
+const User = require('../Models/user')
 const {
   GraphQLObjectType,
   GraphQLID,
@@ -38,6 +39,14 @@ const BookType = new GraphQLObjectType({
   })
 })
 
+const UserType = new GraphQLObjectType({
+  name: "User",
+  fields: () => ({
+    id: { type: GraphQLID },
+    name: { type: GraphQLString },
+  })
+})
+
 const RootQuery = new GraphQLObjectType({
   name: 'RootQuery',
   fields: {
@@ -65,6 +74,19 @@ const RootQuery = new GraphQLObjectType({
       type: new GraphQLList(BookType),
       resolve(parent, args) {
         return Book.find({})
+      }
+    },
+    user: {
+      type: UserType,
+      args: { id: { type: GraphQLID } },
+      resolve(parent, args) {
+        return User.findById(args.id)
+      }
+    },
+    users: {
+      type: new GraphQLList(UserType),
+      resolve(parent, args) {
+        return User.find({})
       }
     }
   }
@@ -140,6 +162,37 @@ const Mutation = new GraphQLObjectType({
       },
       resolve(paretn, args) {
         return Book.findByIdAndRemove(args.id)
+      }
+    },
+    addUser: {
+      type: UserType,
+      args: {
+        name: { type: GraphQLString },
+      },
+      resolve(parent, args) {
+        const user = new User({
+          name: args.name
+        })
+        return user.save()
+      }
+    },
+    updateUser: {
+      type: UserType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+        name: { type: GraphQLString },
+      },
+      resolve(parent, args) {
+        return User.findByIdAndUpdate(args.id, Object.assign({}, args), { new: true })
+      }
+    },
+    deleteUser: {
+      type: UserType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+      },
+      resolve(parent, args) {
+        return user.findByIdAndDelete(args.id)
       }
     }
   }
