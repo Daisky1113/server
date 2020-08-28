@@ -28,6 +28,7 @@ const AuthorType = new GraphQLObjectType({
   })
 })
 
+
 const BookType = new GraphQLObjectType({
   name: "Book",
   fields: () => ({
@@ -37,16 +38,29 @@ const BookType = new GraphQLObjectType({
       type: AuthorType,
       resolve(parent, args) {
         return Author.findById(parent.authorId)
+      },
+    },
+    comments: {
+      type: new GraphQLList(CommentType),
+      resolve(parent, args) {
+        return Comment.find({ bookId: parent.id })
       }
     }
   })
 })
+
 
 const UserType = new GraphQLObjectType({
   name: "User",
   fields: () => ({
     id: { type: GraphQLID },
     name: { type: GraphQLString },
+    comments: {
+      type: new GraphQLList(CommentType),
+      resolve(parent, args) {
+        return Comment.find({ userId: parent.id })
+      }
+    }
   })
 })
 
